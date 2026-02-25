@@ -32,7 +32,7 @@ def get_conn():
     dbname = os.getenv("PGDATABASE")
     user = os.getenv("PGUSER")
     password = os.getenv("PGPASSWORD")
-    sslmode = os.getenv("PGSSL", "require")
+    sslmode = os.getenv("PGSSL")
 
     if not all([dbname, user, password]):
         raise ValueError("Missing env: PGDATABASE / PGUSER / PGPASSWORD")

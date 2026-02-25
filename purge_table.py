@@ -14,7 +14,7 @@ def get_conninfo():
     dbname = os.getenv("PGDATABASE", "")
     user = os.getenv("PGUSER", "")
     password = os.getenv("PGPASSWORD", "")
-    sslmode = os.getenv("PGSSL", "")  # ใส่ค่าเช่น require / disable / verify-full
+    sslmode = os.getenv("PGSSL")  # ใส่ค่าเช่น require / disable / verify-full
 
     conninfo = {}
     if host: conninfo["host"] = host

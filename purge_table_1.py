@@ -13,7 +13,7 @@ def get_conninfo():
     dbname = os.getenv("PGDATABASE", "")
     user = os.getenv("PGUSER", "")
     password = os.getenv("PGPASSWORD", "")
-    sslmode = os.getenv("PGSSL", "")
+    sslmode = os.getenv("PGSSL")
 
     conninfo = {}
     if host: conninfo["host"] = host

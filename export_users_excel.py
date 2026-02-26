@@ -95,6 +95,7 @@ def main():
       role,
       province,
       amphoe,
+      tambon,
       "localGov"
     FROM {args.table}
     {where_sql}
@@ -112,7 +113,7 @@ def main():
     ws = wb.active
     ws.title = args.sheet
 
-    headers = ["username", "password", "role", "province", "amphoe", "localGov"]
+    headers = ["username", "password", "role", "province", "amphoe", "tambon", "localGov"]
     ws.append(headers)
 
     # header style
@@ -123,13 +124,14 @@ def main():
         cell.font = header_font
         cell.alignment = header_align
 
-    for (username, role, province, amphoe, localGov) in rows:
+    for (username, role, province, amphoe, tambon, localGov) in rows:
         ws.append([
             username,
             "12345678",  # password fix ทุกแถว
             role,
             province,
             amphoe,
+            tambon,
             localGov,
         ])
 

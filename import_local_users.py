@@ -19,7 +19,7 @@ except ImportError:
 
 TZ = ZoneInfo("Asia/Bangkok")
 
-KEYWORDS = ["อบต.", "เทศบาลตำบล"]
+KEYWORDS = ["อบต.", "เทศบาลตำบล", "เทศบาลเมือง"]
 
 
 def now_th() -> datetime:

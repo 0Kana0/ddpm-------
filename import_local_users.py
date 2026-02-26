@@ -70,7 +70,10 @@ def contains_keyword(localgov_raw: str | None) -> bool:
     return any(k in localgov_raw for k in KEYWORDS)
 
 
-def clean_localgov(localgov_raw: str | None) -> str | None:
+def clean_tambon_from_col_c(localgov_raw: str | None) -> str | None:
+    """
+    tambon = column C แต่ตัดคำว่า 'อบต.' และ 'เทศบาลตำบล' ออก
+    """
     s = norm(localgov_raw)
     if not s:
         return None
@@ -120,10 +123,11 @@ def main():
 
     conninfo = get_conninfo()
 
+    # ✅ เพิ่ม tambon และให้ localGov เป็น raw
     insert_sql = f"""
     INSERT INTO {args.table} (
       id, username, "passwordHash",
-      role, province, amphoe, "localGov",
+      role, province, amphoe, tambon, "localGov",
       "isActive", "roleConfigId",
       email, "emailVerified",
       "twoFactorEnabled", "failedLoginAttempts",
@@ -131,7 +135,7 @@ def main():
     )
     VALUES (
       %(id)s, %(username)s, %(passwordHash)s,
-      %(role)s, %(province)s, %(amphoe)s, %(localGov)s,
+      %(role)s, %(province)s, %(amphoe)s, %(tambon)s, %(localGov)s,
       %(isActive)s, %(roleConfigId)s,
       %(email)s, %(emailVerified)s,
       %(twoFactorEnabled)s, %(failedLoginAttempts)s,
@@ -146,6 +150,7 @@ def main():
           role = EXCLUDED.role,
           province = EXCLUDED.province,
           amphoe = EXCLUDED.amphoe,
+          tambon = EXCLUDED.tambon,
           "localGov" = EXCLUDED."localGov",
           "isActive" = EXCLUDED."isActive",
           "roleConfigId" = EXCLUDED."roleConfigId",
@@ -159,23 +164,23 @@ def main():
     skipped_no_username = 0
 
     for r in range(start_row, ws.max_row + 1):
-        # ตามโจทย์:
-        # B=username, C=localGov(raw), D=amphoe, E=province
+        # ตาม flow ใหม่:
+        # B=username, C=localGov(raw) + tambon(cleaned), D=amphoe, E=province
         username_raw = ws[f"B{r}"].value
-        localgov_raw = norm(ws[f"C{r}"].value)
+        col_c_raw = norm(ws[f"C{r}"].value)     # raw -> localGov
         amphoe = norm(ws[f"D{r}"].value)
         province = norm(ws[f"E{r}"].value)
 
-        if not contains_keyword(localgov_raw):
+        # บันทึกเฉพาะแถวที่ col C มี keyword
+        if not contains_keyword(col_c_raw):
             skipped_no_keyword += 1
             continue
 
+        # username เอาเฉพาะตัวเลข
         username = digits_only(username_raw)
         if not username:
             skipped_no_username += 1
             continue
-
-        localgov = clean_localgov(localgov_raw)
 
         payload = {
             "id": str(uuid.uuid4()),
@@ -184,7 +189,10 @@ def main():
             "role": "LOCAL",
             "province": province,
             "amphoe": amphoe,
-            "localGov": localgov,
+            # ✅ tambon = col C cleaned (ตัด อบต./เทศบาลตำบล)
+            "tambon": clean_tambon_from_col_c(col_c_raw),
+            # ✅ localGov = col C raw
+            "localGov": col_c_raw,
             "isActive": True,
             "roleConfigId": "LOCAL",
             # ตั้งเป็น NULL เพื่อไม่ชน UNIQUE email
@@ -204,7 +212,10 @@ def main():
 
     if args.dry_run:
         for p in rows[:15]:
-            print(f"- username={p['username']} province={p['province']} amphoe={p['amphoe']} localGov={p['localGov']}")
+            print(
+                f"- username={p['username']} province={p['province']} amphoe={p['amphoe']} "
+                f"tambon={p['tambon']} localGov(raw)={p['localGov']}"
+            )
         print("DRY RUN: no DB changes.")
         return
 
